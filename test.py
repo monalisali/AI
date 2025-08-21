@@ -2,7 +2,6 @@ import requests
 
 
 
-
 def get_baidu_response():
     # 百度首页URL
     url = "https://www.baidu.com"
