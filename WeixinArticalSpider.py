@@ -1,21 +1,26 @@
 # here put the import lib
-
 import json
 import requests
 import time
 import random
+import os
 from datetime import datetime
+from pathlib import Path
 
 def startToReadArtical():
+     artical_path = Path("ArticalData")
+     if not artical_path.exists():
+         artical_path.mkdir(parents=True,exist_ok=True)
+
      with open('./app.json', 'r',encoding='utf-8') as fcc_file:
         fcc_data = json.load(fcc_file)
         articalList = fcc_data["articalList"]
         for o in articalList:
-            readWeixinArtical(o)
+            readWeixinArtical(o,dir=artical_path)
             #print(o["officalAccout"])
            
 
-def readWeixinArtical(itemConfig):
+def readWeixinArtical(itemConfig,dir):
     # 目标公众号的fakeId
     fakeId = itemConfig["fakeId"]
     with open('./app.json', 'r',encoding='utf-8') as fcc_file:
@@ -46,8 +51,12 @@ def readWeixinArtical(itemConfig):
     app_msg_list = []
     # 在不知道公众号有多少文章的情况下，使用while语句
     # 也方便重新运行时设置页数
-    with open("app_msg_list.csv", "w",encoding='utf-8') as file:
-        file.write("文章标识符aid,标题title,链接url,时间time,公众号名称\n")
+    fileSuffix = datetime.fromtimestamp(1755656812).strftime('%Y%m%d')
+    fileName = dir / f"app_msg_list_{fileSuffix}.csv"
+    if not os.path.exists(fileName):
+        with open(fileName, "w",encoding='utf-8-sig') as file:
+            file.write("文章标识符aid,标题title,链接url,时间time,公众号名称\n")
+
     i = 0
     while True:
         # 爬取到第几页就停止
@@ -77,7 +86,7 @@ def readWeixinArtical(itemConfig):
                 publishTime = datetime.fromtimestamp(1755656812).strftime('%Y-%m-%d')
                 info = '"{}","{}","{}","{}","{}"'.format(str(item["aid"]), item['title'], item['link'], str(publishTime)
                                                     ,itemConfig["officalAccout"])
-                with open("app_msg_list.csv", "a",encoding='utf-8') as f:
+                with open(fileName, "a",encoding='utf-8-sig') as f:
                     f.write(info+'\n')
             print(f"第{i}页爬取成功\n")
             print("\n".join(info.split(",")))
