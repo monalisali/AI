@@ -51,7 +51,7 @@ def readWeixinArtical(itemConfig,dir):
     app_msg_list = []
     # 在不知道公众号有多少文章的情况下，使用while语句
     # 也方便重新运行时设置页数
-    fileSuffix = datetime.fromtimestamp(1755656812).strftime('%Y%m%d')
+    fileSuffix = datetime.now().strftime('%Y%m%d')
     fileName = dir / f"app_msg_list_{fileSuffix}.csv"
     if not os.path.exists(fileName):
         with open(fileName, "w",encoding='utf-8-sig') as file:
@@ -83,7 +83,7 @@ def readWeixinArtical(itemConfig,dir):
         if "app_msg_list" in msg:
             for item in msg["app_msg_list"]:
                 timeStamp = item['create_time']
-                publishTime = datetime.fromtimestamp(1755656812).strftime('%Y-%m-%d')
+                publishTime = datetime.fromtimestamp(timeStamp).strftime('%Y-%m-%d')
                 info = '"{}","{}","{}","{}","{}"'.format(str(item["aid"]), item['title'], item['link'], str(publishTime)
                                                     ,itemConfig["officalAccout"])
                 with open(fileName, "a",encoding='utf-8-sig') as f:

@@ -1,10 +1,12 @@
 import requests
 import datetime
+import boto3
+from botocore.client import Config
+import os
 #import requests_async
 
 def get_baidu_response():
-    # 百度首页URL
-    
+    # 百度首页URL  
     url = "https://www.baidu.com"
     today = datetime.date.today().strftime("%Y%m%d")
     
@@ -33,7 +35,59 @@ def get_baidu_response():
     except requests.exceptions.RequestException as e:
         print(f"请求发生错误: {e}")
 
-
+#上传文件到RustFS站点
+def upload_to_rustfs(
+    local_file_path,
+    rustfs_endpoint,
+    access_key,
+    secret_key,
+    bucket_name,
+    remote_directory
+):
+    """
+    向RustFS的指定bucket和目录上传文件
+    
+    参数:
+        local_file_path: 本地文件路径
+        rustfs_endpoint: RustFS的API端点
+        access_key: 访问密钥
+        secret_key: 密钥
+        bucket_name: 目标bucket名称
+        remote_directory: 目标目录路径（如 'data/logs/'）
+    """
+    # 确保远程目录以斜杠结尾
+    if not remote_directory.endswith('/'):
+        remote_directory += '/'
+    
+    # 获取本地文件名
+    file_name = os.path.basename(local_file_path)
+    
+    # 构建远程文件路径
+    remote_file_path = f"{remote_directory}{file_name}"
+    
+    try:
+        # 创建RustFS客户端
+        s3 = boto3.client(
+            's3',
+            endpoint_url=rustfs_endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            config=Config(signature_version='s3v4')
+        )
+        
+        # 上传文件
+        s3.upload_file(
+            Filename=local_file_path,
+            Bucket=bucket_name,
+            Key=remote_file_path
+        )
+        
+        print(f"文件 {local_file_path} 已成功上传到 {bucket_name}/{remote_file_path}")
+        return True
+        
+    except Exception as e:
+        print(f"上传失败: {str(e)}")
+        return False
 
 """
 async def download(args: Args) -> Output:
@@ -70,6 +124,7 @@ async def download(args: Args) -> Output:
 def printString():
     print("this is test print")
 
+upload_to_rustfs("C:\D\mock.txt","http://10.158.15.248:9000","rustfsadmin","g74tU%Gk0*nU","test-bucket","test/")
 #download()
 #get_baidu_response()
 
