@@ -6,6 +6,7 @@ import random
 import os
 from datetime import datetime
 from pathlib import Path
+import logging
 
 def startToReadArtical():
      artical_path = Path("ArticalData")
@@ -68,6 +69,11 @@ def readWeixinArtical(itemConfig,dir):
         # 随机暂停几秒，避免过快的请求导致过快的被查到
         time.sleep(random.randint(1,10))
         resp = requests.get(url, headers=headers, params = params, verify=False,timeout=60)
+        if resp.json()['base_resp']['err_msg'] == 'invalid session':
+            logging.info("app.json 中的'cookieStr'可能过期了，请更新")
+            print("app.json 中的'cookieStr 和 token'可能过期了，请更新")
+            break
+
         # 微信流量控制, 退出
         if resp.json()['base_resp']['ret'] == 200013:
             print("frequencey control, stop at {}".format(str(begin)))
