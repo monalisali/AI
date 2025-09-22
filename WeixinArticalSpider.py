@@ -7,20 +7,25 @@ import os
 from datetime import datetime
 from pathlib import Path
 import logging
+import re
 
 def startToReadArtical():
      artical_path = Path("ArticalData")
      if not artical_path.exists():
          artical_path.mkdir(parents=True,exist_ok=True)
-
+     
+     # 读取app.json中的articalList参数是待读取的公众号的配置信息
      with open('./app.json', 'r',encoding='utf-8') as fcc_file:
         fcc_data = json.load(fcc_file)
         articalList = fcc_data["articalList"]
         for o in articalList:
             readWeixinArtical(o,dir=artical_path)
-            #print(o["officalAccout"])
-           
 
+           
+# 读取指定公众号的文章
+# 参数: 
+# itemConfig: 公众号的配置信息
+# dir: 存放文件的目录
 def readWeixinArtical(itemConfig,dir):
     # 目标公众号的fakeId
     fakeId = itemConfig["fakeId"]
@@ -70,7 +75,7 @@ def readWeixinArtical(itemConfig,dir):
         time.sleep(random.randint(1,10))
         resp = requests.get(url, headers=headers, params = params, verify=False,timeout=60)
         if resp.json()['base_resp']['err_msg'] == 'invalid session':
-            logging.info("app.json 中的'cookieStr'可能过期了，请更新")
+            logging.info("app.json 中的'cookieStr' 和 token 可能过期了，请更新")
             print("app.json 中的'cookieStr 和 token'可能过期了，请更新")
             break
 
@@ -94,11 +99,56 @@ def readWeixinArtical(itemConfig,dir):
                                                     ,itemConfig["officalAccout"])
                 with open(fileName, "a",encoding='utf-8-sig') as f:
                     f.write(info+'\n')
-            print(f"第{i}页爬取成功\n")
+            print(f"第{i+1}页爬取成功\n")
             print("\n".join(info.split(",")))
             print("\n\n---------------------------------------------------------------------------------\n")
 
         # 翻页
         i += 1    
 
-startToReadArtical()
+def GetArticalConetent(fileFullName):
+    with open('./app.json', 'r',encoding='utf-8') as fcc_file:
+        appData = json.load(fcc_file) 
+    headers = {
+        "Cookie": appData["cookieStr"],
+        "User-Agent": appData["userAgent"]
+    }
+
+    with open(fileFullName, "r",encoding='utf-8-sig') as file:
+        data = file.readlines()
+        #print(data)
+        n = len(data)
+    for i in range(n):
+        mes = data[i].strip("\n").split(",")
+        if len(mes) != 5: #校验列头是否为5列
+            continue
+        title,url = mes[1:3]
+        if i > 0:
+            resp = requests.get(eval(url), headers=headers)
+            if resp.status_code == 200:
+                text = cleanRespText(resp.text)
+                print(resp.url)      
+                print(text)
+                print("---------------------------------------")
+         
+
+def cleanRespText(text):
+    pattern = re.compile(
+                r'<[^>]+>|'  # 匹配所有HTML标签
+                r'\s+(data|style|class|id|href|src|type|on\w+)="[^"]*"|'  # 匹配HTML属性
+                r'\s+(data|style|class|id|href|src|type|on\w+)=\'[^\']*\''  # 匹配单引号的HTML属性
+            )
+    
+    #截取正文数据
+    text = text[text.rfind("rich_media_content js_underline_content"):text.rfind('<script type="text/javascript"')]
+    #截取后的正文包含很多html和css代码，去掉它们
+    text = pattern.sub('',text) 
+    #尾部还有js代码，去掉它们
+    text = text[text.find('">')+2:text.find('var')]
+    #去除无用的空白和换行
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
+GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250915.csv")
+#startToReadArtical()
