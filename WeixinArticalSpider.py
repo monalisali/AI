@@ -8,6 +8,26 @@ from datetime import datetime
 from pathlib import Path
 import logging
 import re
+from collections import defaultdict
+
+class Artical:
+    def __init__(self,id,title,url,time,name,content):
+        self.文章标识符aid = id
+        self.文章标识符aid = title
+        self.链接url = url
+        self.时间time = time
+        self.公众号名称 = name
+        self.finalContent = content
+    
+    def to_dict(self):
+        return {
+            "文章标识符aid": self.文章标识符aid,
+            "文章标识符aid": self.文章标识符aid,
+            "链接url": self.链接url,
+            "时间time":self.时间time,
+            "公众号名称":self.公众号名称,
+            "finalContent":self.finalContent
+        }
 
 def startToReadArtical():
      artical_path = Path("ArticalData")
@@ -65,7 +85,7 @@ def readWeixinArtical(itemConfig,dir):
 
     i = 0
     while True:
-        # 爬取到第几页就停止
+        # !!!爬取到第几页就停止
         if i == 1:
             break
         
@@ -107,6 +127,7 @@ def readWeixinArtical(itemConfig,dir):
         i += 1    
 
 def GetArticalConetent(fileFullName):
+    contentList= []
     with open('./app.json', 'r',encoding='utf-8') as fcc_file:
         appData = json.load(fcc_file) 
     headers = {
@@ -122,14 +143,30 @@ def GetArticalConetent(fileFullName):
         mes = data[i].strip("\n").split(",")
         if len(mes) != 5: #校验列头是否为5列
             continue
-        title,url = mes[1:3]
+        url = mes[2]
+        text = ''
         if i > 0:
-            resp = requests.get(eval(url), headers=headers)
+            resp = requests.get(url, headers=headers)
             if resp.status_code == 200:
                 text = cleanRespText(resp.text)
-                print(resp.url)      
-                print(text)
-                print("---------------------------------------")
+                contentList.append( Artical(mes[0], mes[1],url, mes[3],mes[4],text))
+    
+    content_path = Path("ArticalData/contentFiles")
+    if not content_path.exists():
+        content_path.mkdir(parents=True,exist_ok=True)
+
+    grpNames = defaultdict(list)
+    for c in contentList:
+        grpNames[c.公众号名称].append(c)
+    # 公众号名称一样的内容放在一个文件中
+    for n in grpNames:
+        fileSuffix = datetime.now().strftime('%Y%m%d')
+        fileName = content_path / f"{n}_{fileSuffix}.md"
+        with open(fileName, "w",encoding='utf-8-sig') as contentFile:
+            convertedList = [art.to_dict() for art in contentList if art.公众号名称 == n]
+            contentFile.write(json.dumps(convertedList,ensure_ascii=False)) #输出的内容要格式漂亮的话，可以带上indent=4参数
+            logging.info("生成公众号内容文件：" + fileName) 
+        
          
 
 def cleanRespText(text):
@@ -150,5 +187,5 @@ def cleanRespText(text):
     return text
 
 
-GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250915.csv")
-#startToReadArtical()
+#GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250919.csv")
+startToReadArtical()
