@@ -3,6 +3,7 @@
    "token":641985591,
    "userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
    "maxPagesToGet":1,
+   "enableTaxPolicyFilter":true,
    "articalList":[
      {"officalAccout":"上海经信委","fakeId":"MjM5MDU2MTc4NQ%3D%3D"}
     ,{"officalAccout":"北邮家教部","fakeId":"MjM5NDY3ODI4OA%3D%3D"}

@@ -13,7 +13,7 @@ from collections import defaultdict
 class Artical:
     def __init__(self,id,title,url,time,name,content):
         self.文章标识符aid = id.strip('"')
-        self.文章标识符aid = title.strip('"')
+        self.标题title = title.strip('"')
         self.链接url = url.strip('"')
         self.时间time = time.strip('"')
         self.公众号名称 = name.strip('"')
@@ -22,7 +22,7 @@ class Artical:
     def to_dict(self):
         return {
             "文章标识符aid": self.文章标识符aid,
-            "文章标识符aid": self.文章标识符aid,
+            "标题title": self.标题title,
             "链接url": self.链接url,
             "时间time":self.时间time,
             "公众号名称":self.公众号名称,
@@ -121,6 +121,7 @@ def readWeixinArtical(itemConfig,fileName):
                 publishTime = datetime.fromtimestamp(timeStamp).strftime('%Y-%m-%d')
                 info = '"{}","{}","{}","{}","{}"'.format(str(item["aid"]), item['title'], item['link'], str(publishTime)
                                                     ,itemConfig["officalAccout"])
+                
                 with open(fileName, "a",encoding='utf-8-sig') as f:
                     f.write(info+'\n')
             print(f"第{i+1}页爬取成功\n")
@@ -137,7 +138,10 @@ def readWeixinArtical(itemConfig,fileName):
 def GetArticalConetent(fileFullName):
     log.logging.info("读取url文件：" + str(fileFullName))
     print("读取url文件：", str(fileFullName))
+    # 读取的文件内容
     contentList= []
+    # 税务相关的内容
+    taxPolicyArtical = []
     with open('./app.json', 'r',encoding='utf-8') as fcc_file:
         appData = json.load(fcc_file) 
     headers = {
@@ -166,9 +170,14 @@ def GetArticalConetent(fileFullName):
     content_path = Path("ArticalData/contentFiles")
     if not content_path.exists():
         content_path.mkdir(parents=True,exist_ok=True)
+    #获取税务相关的文章
+    for c in contentList:
+        if getTaxPolicyArticalOnly(c) is not None:
+            taxPolicyArtical.append(c)
+    
 
     grpNames = defaultdict(list)
-    for c in contentList:
+    for c in taxPolicyArtical:
         grpNames[c.公众号名称].append(c)
     # 公众号名称一样的内容放在一个文件中
     log.logging.info("生成公众号内容文件开始")
@@ -176,7 +185,7 @@ def GetArticalConetent(fileFullName):
         fileSuffix = datetime.now().strftime('%Y%m%d')
         fileName = content_path / f"{n}_{fileSuffix}.md"
         with open(fileName, "w",encoding='utf-8-sig') as contentFile:
-            convertedList = [art.to_dict() for art in contentList if art.公众号名称 == n]
+            convertedList = [art.to_dict() for art in taxPolicyArtical if art.公众号名称 == n]
             contentFile.write(json.dumps(convertedList,ensure_ascii=False)) #输出的内容要格式漂亮的话，可以带上indent=4参数
             log.logging.info("生成公众号内容文件：" + str(fileName.resolve()))
             print("生成公众号内容文件：", str(fileName.resolve()))
@@ -202,7 +211,25 @@ def cleanRespText(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
+# 获取税务相关的文章
+# 参数: 
+# articalObj: 文章对象
+# 返回: 
+# 如果enableTaxPolicyFilter为True并且文章标题中包含"税"字，则是“税务”相关内容，返回文章对象
+# 如果app.json中enableTaxPolicyFilter为False，说明不用过滤“税务”内容，直接文章对象
+def getTaxPolicyArticalOnly(articalObj):
+    with open('./app.json', 'r',encoding='utf-8') as fcc_file:
+        appData = json.load(fcc_file) 
+    if appData["enableTaxPolicyFilter"] and articalObj.标题title.find("税") != -1:
+        return articalObj
+    elif not appData["enableTaxPolicyFilter"]:
+        return articalObj
+    else:
+        return None
 
-#GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250919.csv")
+
+
+
+GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250923_133902 - Copy.csv")
 #urlFileName = startToReadArtical()
 #GetArticalConetent(urlFileName)
