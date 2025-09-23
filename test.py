@@ -125,7 +125,7 @@ def printString():
     print("this is test print")
 
 
-
+'''
 def convertObj():
     source_data = [
       {
@@ -194,7 +194,7 @@ def convertObj():
         #print("----------------")
         #print(record_id)
         #print(fields)
-        print(convert)
+        #print(convert)
 
 
 def resetArray():
@@ -268,9 +268,9 @@ def resetArray():
                 break
     print(rtn)
             
+'''
 
-
-resetArray()
+#resetArray()
 #convertObj()
 #printString()
 #upload_to_rustfs("C:\D\mock.txt","http://10.158.15.248:9000","rustfsadmin","g74tU%Gk0*nU","test-bucket","test/")

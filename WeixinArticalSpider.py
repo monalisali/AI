@@ -6,18 +6,18 @@ import random
 import os
 from datetime import datetime
 from pathlib import Path
-import logging
+import log_config as log
 import re
 from collections import defaultdict
 
 class Artical:
     def __init__(self,id,title,url,time,name,content):
-        self.文章标识符aid = id
-        self.文章标识符aid = title
-        self.链接url = url
-        self.时间time = time
-        self.公众号名称 = name
-        self.finalContent = content
+        self.文章标识符aid = id.strip('"')
+        self.文章标识符aid = title.strip('"')
+        self.链接url = url.strip('"')
+        self.时间time = time.strip('"')
+        self.公众号名称 = name.strip('"')
+        self.finalContent = content.strip('"')
     
     def to_dict(self):
         return {
@@ -38,15 +38,20 @@ def startToReadArtical():
      with open('./app.json', 'r',encoding='utf-8') as fcc_file:
         fcc_data = json.load(fcc_file)
         articalList = fcc_data["articalList"]
+        fileSuffix = datetime.now().strftime('%Y%m%d_%H%M%S')
+        fileName = artical_path / f"app_msg_list_{fileSuffix}.csv"
         for o in articalList:
-            readWeixinArtical(o,dir=artical_path)
+            readWeixinArtical(o,fileName)
+        
+        log.logging.info("生成url文件： " + str(fileName.resolve()))    
+        return str(fileName.resolve())
 
            
 # 读取指定公众号的文章
 # 参数: 
 # itemConfig: 公众号的配置信息
 # dir: 存放文件的目录
-def readWeixinArtical(itemConfig,dir):
+def readWeixinArtical(itemConfig,fileName):
     # 目标公众号的fakeId
     fakeId = itemConfig["fakeId"]
     with open('./app.json', 'r',encoding='utf-8') as fcc_file:
@@ -75,18 +80,17 @@ def readWeixinArtical(itemConfig,dir):
 
     # 存放结果
     app_msg_list = []
-    # 在不知道公众号有多少文章的情况下，使用while语句
-    # 也方便重新运行时设置页数
-    fileSuffix = datetime.now().strftime('%Y%m%d')
-    fileName = dir / f"app_msg_list_{fileSuffix}.csv"
     if not os.path.exists(fileName):
         with open(fileName, "w",encoding='utf-8-sig') as file:
             file.write("文章标识符aid,标题title,链接url,时间time,公众号名称\n")
-
+    
+    # 在不知道公众号有多少文章的情况下，使用while语句
+    # 也方便重新运行时设置页数
+    print("\n\n---------------------------！！爬取开始！！-------------------------------------------------\n")
     i = 0
     while True:
         # !!!爬取到第几页就停止
-        if i == 1:
+        if i == appData["maxPagesToGet"]:
             break
         
         begin = i * 5
@@ -95,7 +99,7 @@ def readWeixinArtical(itemConfig,dir):
         time.sleep(random.randint(1,10))
         resp = requests.get(url, headers=headers, params = params, verify=False,timeout=60)
         if resp.json()['base_resp']['err_msg'] == 'invalid session':
-            logging.info("app.json 中的'cookieStr' 和 token 可能过期了，请更新")
+            log.logging.info("app.json 中的'cookieStr' 和 token 可能过期了，请更新")
             print("app.json 中的'cookieStr 和 token'可能过期了，请更新")
             break
 
@@ -124,9 +128,15 @@ def readWeixinArtical(itemConfig,dir):
             print("\n\n---------------------------------------------------------------------------------\n")
 
         # 翻页
-        i += 1    
+        i += 1
+    
+    print("\n\n---------------------------！！爬取结束！！-------------------------------------------------\n")    
+    
+    
 
 def GetArticalConetent(fileFullName):
+    log.logging.info("读取url文件：" + str(fileFullName))
+    print("读取url文件：", str(fileFullName))
     contentList= []
     with open('./app.json', 'r',encoding='utf-8') as fcc_file:
         appData = json.load(fcc_file) 
@@ -137,19 +147,21 @@ def GetArticalConetent(fileFullName):
 
     with open(fileFullName, "r",encoding='utf-8-sig') as file:
         data = file.readlines()
-        #print(data)
+        # print(data)
         n = len(data)
     for i in range(n):
         mes = data[i].strip("\n").split(",")
         if len(mes) != 5: #校验列头是否为5列
             continue
-        url = mes[2]
+        url = mes[2].strip('"')
         text = ''
         if i > 0:
             resp = requests.get(url, headers=headers)
             if resp.status_code == 200:
                 text = cleanRespText(resp.text)
                 contentList.append( Artical(mes[0], mes[1],url, mes[3],mes[4],text))
+                log.logging.info("url内容读取完成：" + str(url))
+                print("url内容读取完成：", str(url))
     
     content_path = Path("ArticalData/contentFiles")
     if not content_path.exists():
@@ -159,14 +171,18 @@ def GetArticalConetent(fileFullName):
     for c in contentList:
         grpNames[c.公众号名称].append(c)
     # 公众号名称一样的内容放在一个文件中
+    log.logging.info("生成公众号内容文件开始")
     for n in grpNames:
         fileSuffix = datetime.now().strftime('%Y%m%d')
         fileName = content_path / f"{n}_{fileSuffix}.md"
         with open(fileName, "w",encoding='utf-8-sig') as contentFile:
             convertedList = [art.to_dict() for art in contentList if art.公众号名称 == n]
             contentFile.write(json.dumps(convertedList,ensure_ascii=False)) #输出的内容要格式漂亮的话，可以带上indent=4参数
-            logging.info("生成公众号内容文件：" + fileName) 
-        
+            log.logging.info("生成公众号内容文件：" + str(fileName.resolve()))
+            print("生成公众号内容文件：", str(fileName.resolve()))
+    
+    log.logging.info("生成公众号内容文件结束")
+    print("\n\n------------------------！！生成公众号内容文件结束！！----------------------------------------------\n")    
          
 
 def cleanRespText(text):
@@ -188,4 +204,5 @@ def cleanRespText(text):
 
 
 #GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250919.csv")
-startToReadArtical()
+#urlFileName = startToReadArtical()
+#GetArticalConetent(urlFileName)
