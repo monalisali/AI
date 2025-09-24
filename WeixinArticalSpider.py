@@ -138,10 +138,9 @@ def readWeixinArtical(itemConfig,fileName):
 def GetArticalConetent(fileFullName):
     log.logging.info("读取url文件：" + str(fileFullName))
     print("读取url文件：", str(fileFullName))
-    # 读取的文件内容
-    contentList= []
-    # 税务相关的内容
-    taxPolicyArtical = []
+    contentList= [] # 读取的文件内容
+    taxPolicyArtical = []  # 税务相关的内容
+    filePathList = [] #生成文件的路径
     with open('./app.json', 'r',encoding='utf-8') as fcc_file:
         appData = json.load(fcc_file) 
     headers = {
@@ -187,16 +186,18 @@ def GetArticalConetent(fileFullName):
         with open(fileName, "w",encoding='utf-8-sig') as contentFile:
             convertedList = [art.to_dict() for art in taxPolicyArtical if art.公众号名称 == n]
             contentFile.write(json.dumps(convertedList,ensure_ascii=False)) #输出的内容要格式漂亮的话，可以带上indent=4参数
+            filePathList.append(str(fileName.resolve()))
             log.logging.info("生成公众号内容文件：" + str(fileName.resolve()))
             print("生成公众号内容文件：", str(fileName.resolve()))
     
     log.logging.info("生成公众号内容文件结束")
-    print("\n\n------------------------！！生成公众号内容文件结束！！----------------------------------------------\n")    
+    print("\n\n------------------------！！生成公众号内容文件结束！！----------------------------------------------\n")
+    return filePathList
          
 
 def cleanRespText(text):
     pattern = re.compile(
-                r'<[^>]+>|'  # 匹配所有HTML标签
+                r'<(?!/p\b)[^>]+>|'  # 匹配所有HTML标签，只保留</p>
                 r'\s+(data|style|class|id|href|src|type|on\w+)="[^"]*"|'  # 匹配HTML属性
                 r'\s+(data|style|class|id|href|src|type|on\w+)=\'[^\']*\''  # 匹配单引号的HTML属性
             )
@@ -209,6 +210,8 @@ def cleanRespText(text):
     text = text[text.find('">')+2:text.find('var')]
     #去除无用的空白和换行
     text = re.sub(r'\s+', ' ', text).strip()
+    #文章中有些地方用了</p>没用换行符，所以要把</p>要替换成换行符
+    text = text.replace("</p>",'\r')
     return text
 
 # 获取税务相关的文章
@@ -230,6 +233,7 @@ def getTaxPolicyArticalOnly(articalObj):
 
 
 
-GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250923_133902 - Copy.csv")
+ss = GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250923_133902 - Copy.csv")
+vv = "a"
 #urlFileName = startToReadArtical()
 #GetArticalConetent(urlFileName)
