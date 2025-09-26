@@ -165,8 +165,9 @@ def GetArticalConetent(fileFullName):
                 contentList.append( Artical(mes[0], mes[1],url, mes[3],mes[4],text))
                 log.logging.info("url内容读取完成：" + str(url))
                 print("url内容读取完成：", str(url))
-    
-    content_path = Path("ArticalData/contentFiles")
+
+    fileSuffix = datetime.now().strftime('%Y%m%d')
+    content_path = Path("ArticalData/contentFiles/" + fileSuffix)
     if not content_path.exists():
         content_path.mkdir(parents=True,exist_ok=True)
     #获取税务相关的文章
@@ -181,7 +182,6 @@ def GetArticalConetent(fileFullName):
     # 公众号名称一样的内容放在一个文件中
     log.logging.info("生成公众号内容文件开始")
     for n in grpNames:
-        fileSuffix = datetime.now().strftime('%Y%m%d')
         fileName = content_path / f"{n}_{fileSuffix}.md"
         with open(fileName, "w",encoding='utf-8-sig') as contentFile:
             convertedList = [art.to_dict() for art in taxPolicyArtical if art.公众号名称 == n]
@@ -233,7 +233,7 @@ def getTaxPolicyArticalOnly(articalObj):
 
 
 
-#ss = GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250923_133902 - Copy.csv")
+ss = GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250923_133902 - Copy.csv")
 #vv = "a"
 #urlFileName = startToReadArtical()
 #GetArticalConetent(urlFileName)
