@@ -86,7 +86,7 @@ def readWeixinArtical(itemConfig,fileName):
     
     # 在不知道公众号有多少文章的情况下，使用while语句
     # 也方便重新运行时设置页数
-    print("\n\n---------------------------！！爬取开始！！-------------------------------------------------\n")
+    print("\n\n---------------------------！！爬取URL开始！！-------------------------------------------------\n")
     i = 0
     while True:
         # !!!爬取到第几页就停止
@@ -126,16 +126,17 @@ def readWeixinArtical(itemConfig,fileName):
                     f.write(info+'\n')
             print(f"第{i+1}页爬取成功\n")
             print("\n".join(info.split(",")))
-            print("\n\n---------------------------------------------------------------------------------\n")
 
         # 翻页
         i += 1
     
-    print("\n\n---------------------------！！爬取结束！！-------------------------------------------------\n")    
+    print("\n\n---------------------------！！爬取URL结束！！-------------------------------------------------\n")    
     
     
 
 def GetArticalConetent(fileFullName):
+    print("\n\n------------------------！！生成公众号内容文件开始！！----------------------------------------------\n")
+    log.logging.info("------------------------！！生成公众号内容文件开始！！----------------------------------------------")
     log.logging.info("读取url文件：" + str(fileFullName))
     print("读取url文件：", str(fileFullName))
     contentList= [] # 读取的文件内容
@@ -180,7 +181,6 @@ def GetArticalConetent(fileFullName):
     for c in taxPolicyArtical:
         grpNames[c.公众号名称].append(c)
     # 公众号名称一样的内容放在一个文件中
-    log.logging.info("生成公众号内容文件开始")
     for n in grpNames:
         fileName = content_path / f"{n}_{fileSuffix}.md"
         with open(fileName, "w",encoding='utf-8-sig') as contentFile:
@@ -190,7 +190,7 @@ def GetArticalConetent(fileFullName):
             log.logging.info("生成公众号内容文件：" + str(fileName.resolve()))
             print("生成公众号内容文件：", str(fileName.resolve()))
     
-    log.logging.info("生成公众号内容文件结束")
+    log.logging.info("------------------------！！生成公众号内容文件结束！！----------------------------------------------")
     print("\n\n------------------------！！生成公众号内容文件结束！！----------------------------------------------\n")
     return filePathList
          
@@ -233,7 +233,7 @@ def getTaxPolicyArticalOnly(articalObj):
 
 
 
-ss = GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20250923_133902 - Copy.csv")
+#ss = GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20251022_100942.csv")
 #vv = "a"
 #urlFileName = startToReadArtical()
 #GetArticalConetent(urlFileName)
