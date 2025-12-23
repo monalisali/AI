@@ -233,7 +233,7 @@ def getTaxPolicyArticalOnly(articalObj):
 
 
 
-#ss = GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20251114_140315.csv")
+ss = GetArticalConetent(r"C:\D\AI\ArticalData\app_msg_list_20251223_120845.csv")
 #vv = "a"
 #urlFileName = startToReadArtical()
 #GetArticalConetent(urlFileName)
